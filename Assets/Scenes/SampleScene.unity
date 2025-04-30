@@ -1040,7 +1040,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   wallJumpForce: 4
-  wallJumpDirectionForce: 40
+  wallJumpDirectionForce: 20
   wallJumpDuration: 1.2
   groundCheck: {fileID: 1486368453}
   groundCheckRadius: 0.3
