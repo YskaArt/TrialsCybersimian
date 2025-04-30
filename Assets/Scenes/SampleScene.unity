@@ -933,6 +933,7 @@ MonoBehaviour:
     m_Bits: 64
   wallJumpForce: 8
   wallJumpDirectionForce: 4
+  wallJumpDuration: 1.2
   groundCheck: {fileID: 1486368453}
   groundCheckRadius: 0.3
   groundMask:
