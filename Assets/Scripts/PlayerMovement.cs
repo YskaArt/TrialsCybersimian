@@ -23,7 +23,7 @@ public class PlayerController : MonoBehaviour
     public LayerMask wallMask;
     public float wallJumpForce = 8f;
     public float wallJumpDirectionForce = 4f;
-    public float wallJumpDuration = 1.2f; // Tiempo que dura la fuerza lateral
+    public float wallJumpDuration = 1.2f;
 
     [Header("Ground Check Settings")]
     public Transform groundCheck;
@@ -32,6 +32,19 @@ public class PlayerController : MonoBehaviour
 
     [Header("Camera Settings")]
     public Transform orientation;
+
+    [Header("Dash Settings")]
+    public float dashForce = 20f;
+    public float dashDuration = 0.2f;
+    public float dashCooldown = 1f;
+    private float dashCooldownTimer;
+    private bool isDashing;
+    private Vector3 dashDirection;
+    private float dashTimer;
+
+    [Header("Dash VFX")]
+    public GameObject dashParticlesPrefab;
+    public Transform dashEffectSpawnPoint;
 
     private CharacterController controller;
     private Animator animator;
@@ -60,8 +73,8 @@ public class PlayerController : MonoBehaviour
         HandleMovement();
         HandleGravity();
         HandleAnimations();
-
         UpdateWallJumpTimer();
+        UpdateDash();
     }
 
     private void GroundCheck()
@@ -85,38 +98,40 @@ public class PlayerController : MonoBehaviour
         if (Input.GetButtonDown("Jump"))
         {
             if (isGrounded)
-            {
                 Jump();
-            }
             else
-            {
                 TryWallJump();
-            }
         }
 
         // Crouch / Slide
         if (Input.GetKeyDown(KeyCode.LeftControl))
         {
             if (isSprinting && isGrounded)
-            {
                 StartSlide();
-            }
             else
-            {
                 StartCrouch();
-            }
         }
         else if (Input.GetKeyUp(KeyCode.LeftControl))
         {
-            if (isSliding)
-                StopSlide();
-            else
-                StopCrouch();
+            if (isSliding) StopSlide();
+            else StopCrouch();
+        }
+
+        // Dash
+        if (Input.GetKeyDown(KeyCode.E) && dashCooldownTimer <= 0 && !isDashing)
+        {
+            StartDash();
         }
     }
 
     private void HandleMovement()
     {
+        if (isDashing)
+        {
+            controller.Move(dashDirection * dashForce * Time.deltaTime);
+            return;
+        }
+
         Vector3 finalMove = moveDirection;
 
         if (wallJumpTimer > 0)
@@ -127,31 +142,27 @@ public class PlayerController : MonoBehaviour
             finalMove = slideDirection;
             controller.Move(finalMove.normalized * slideSpeed * Time.deltaTime);
             slideTimer -= Time.deltaTime;
-            if (slideTimer <= 0)
-            {
-                StopSlide();
-            }
+            if (slideTimer <= 0) StopSlide();
             return;
         }
 
         float currentSpeed = walkSpeed;
-        if (isCrouching)
-            currentSpeed = crouchSpeed;
-        else if (isSprinting)
-            currentSpeed = sprintSpeed;
+        if (isCrouching) currentSpeed = crouchSpeed;
+        else if (isSprinting) currentSpeed = sprintSpeed;
 
         controller.Move(finalMove.normalized * currentSpeed * Time.deltaTime);
     }
 
     private void HandleGravity()
     {
-        if (isGrounded && velocity.y < 0)
+        if (!isDashing)
         {
-            velocity.y = -2f;
-        }
+            if (isGrounded && velocity.y < 0)
+                velocity.y = -2f;
 
-        velocity.y += gravity * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
+            velocity.y += gravity * Time.deltaTime;
+            controller.Move(velocity * Time.deltaTime);
+        }
     }
 
     private void Jump()
@@ -163,14 +174,10 @@ public class PlayerController : MonoBehaviour
     private void TryWallJump()
     {
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, orientation.right, out hit, 2f, wallMask))
-        {
+        if (Physics.Raycast(transform.position, orientation.right, out hit, 1.5f, wallMask))
             WallJump(-orientation.right, true);
-        }
-        else if (Physics.Raycast(transform.position, -orientation.right, out hit, 2f, wallMask))
-        {
+        else if (Physics.Raycast(transform.position, -orientation.right, out hit, 1.5f, wallMask))
             WallJump(orientation.right, false);
-        }
     }
 
     private void WallJump(Vector3 wallNormal, bool mirror)
@@ -180,7 +187,6 @@ public class PlayerController : MonoBehaviour
         wallJumpTimer = wallJumpDuration;
         animator.SetBool("WallJumpMirror", mirror);
         animator.SetTrigger("WallJump");
-        
     }
 
     private void UpdateWallJumpTimer()
@@ -228,6 +234,36 @@ public class PlayerController : MonoBehaviour
         controller.height = standingHeight;
         controller.center = new Vector3(0, standingHeight / 2f, 0);
         animator.ResetTrigger("Slide");
+    }
+
+    private void StartDash()
+    {
+        isDashing = true;
+        dashTimer = dashDuration;
+        dashCooldownTimer = dashCooldown;
+        dashDirection = orientation.forward;
+
+        animator.SetTrigger("Dash");
+
+        // Instanciar partículas del dash
+        if (dashParticlesPrefab != null)
+        {
+            Vector3 spawnPos = dashEffectSpawnPoint != null ? dashEffectSpawnPoint.position : transform.position;
+            Instantiate(dashParticlesPrefab, spawnPos, Quaternion.identity);
+        }
+    }
+
+    private void UpdateDash()
+    {
+        if (dashCooldownTimer > 0)
+            dashCooldownTimer -= Time.deltaTime;
+
+        if (isDashing)
+        {
+            dashTimer -= Time.deltaTime;
+            if (dashTimer <= 0)
+                isDashing = false;
+        }
     }
 
     private void HandleAnimations()
