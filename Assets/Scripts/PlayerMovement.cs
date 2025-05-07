@@ -63,6 +63,7 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
+        Cursor.visible = false;
         controller = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
     }

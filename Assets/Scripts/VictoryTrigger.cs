@@ -10,6 +10,7 @@ public class VictoryTrigger : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            Cursor.visible = true;
             GameManager.finalScore = GameManager.Instance != null ? GameManager.Instance.GetScore() : 0;
             SceneManager.LoadScene(victorySceneName); 
             

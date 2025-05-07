@@ -44,6 +44,7 @@ public class GameManager : MonoBehaviour
     public void GameOver()
     {
         if (isGameOver) return;
+        Cursor.visible = true;
         isGameOver = true;
 
        
