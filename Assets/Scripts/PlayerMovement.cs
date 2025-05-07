@@ -59,6 +59,7 @@ public class PlayerController : MonoBehaviour
     private bool isSprinting;
     private bool isCrouching;
     private bool isSliding;
+    private bool isDead = false;
 
     private void Start()
     {
@@ -67,7 +68,14 @@ public class PlayerController : MonoBehaviour
     }
 
     private void Update()
+
     {
+        if (isDead)
+        {
+            HandleGravity(); 
+            return;
+        }
+
         GroundCheck();
         HandleInput();
         HandleMovement();
@@ -264,6 +272,14 @@ public class PlayerController : MonoBehaviour
             if (dashTimer <= 0)
                 isDashing = false;
         }
+    }
+    public void Die()
+    {
+        if (isDead) return;
+
+        isDead = true;
+        animator.SetTrigger("Death");
+       
     }
 
     private void HandleAnimations()

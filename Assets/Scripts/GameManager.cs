@@ -13,6 +13,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Score")]
     private int score = 0;
+    public static int finalScore = 0;
 
     private bool isGameOver = false;
 
@@ -60,6 +61,11 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
+    public int GetScore()
+    {
+        return score;
+    }
+
 
     public void QuitToMenu()
     {
